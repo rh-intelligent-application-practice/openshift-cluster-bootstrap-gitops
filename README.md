@@ -32,19 +32,19 @@ This repository will configure the following items.
 
 In order to bootstrap this repository you must have the following cli tools:
 
-- `oc` [Download OpenShift cli](https://formulae.brew.sh/formula/openshift-cli)
-- `kustomize` [Download kustomize](https://formulae.brew.sh/formula/kustomize)
+- `oc` - Download [[mac](https://formulae.brew.sh/formula/openshift-cli)], [[linux](https://mirror.openshift.com/pub/openshift-v4/clients)]
+- `kustomize` (optional) - Download [[mac](https://formulae.brew.sh/formula/kustomize)], [[linux](https://github.com/kubernetes-sigs/kustomize/releases)]
 
 ### Cluster Request
 
 Request resources from the [Red Hat Product Demo System](https://source.redhat.com/departments/globalservices/gpte/redhatproductdemosystem)
 
 1. Access [RHPDS](https://rhpds.redhat.com/)
-1. Select the catalog item: Services > Catalogs > All Services > Openshift Workshops > OpenShift 4.9 Workshop > click Order
+1. Select the catalog item: Services > Catalogs > All Services > OpenShift Workshops > OpenShift 4.9 Workshop > click Order
 1. Use `N/A` for the SFDC Opportunity, Campaign ID, or Partner Registration required field
 1. Utilize the default `Training` size to generate a cluster with three nodes
 1. Check confirmation box to acknowledge the warnings
-1. Select purpose from the optinons menu
+1. Select purpose from the options menu
 1. Click Submit at bottom of the page
 1. Provisioning should be automatic and will take 45-75 minutes to complete, connection details (web console, oc commands etc.) are provided in an email once complete
 
@@ -58,26 +58,21 @@ Next, clone this repository to your local environment.
 
 This repository deploys sealed-secrets and requires a sealed secret master key to bootstrap.  If you plan to reuse sealed-secrets created using another key you must obtain that key from the person that created the sealed-secrets.
 
-If you do not plan to utilize existing sealed secrets you can instead bootstrap a new sealed-secrets controller and obtain a new secret.
-
-Execute the following script:
-
-```sh
-./bootstrap_sealed-secrets_secret.sh
-```
-
-This will install a new instance of Sealed Secrets on the cluster and create the following file:
-
+The sealed secret(s) for bootstrap should be located at:
 ```sh
 bootstrap/base/sealed-secrets-secret.yaml
 ```
+
+If you do not plan to utilize existing sealed secrets you can instead bootstrap a new sealed-secrets controller and obtain a new secret. 
+
+`bootstrap.sh` can also be to used to create the file if it doesn't already exist.
 
 ### Cluster Bootstrap
 
 Execute the following script:
 
 ```sh
-./bootstrap.sh
+./scripts/bootstrap.sh
 ```
 
 The `bootstrap.sh` script will install the OpenShift GitOps Operator, create an ArgoCD instance once the operator is deployed in the `openshift-gitops` namespace, and bootstrap a set of ArgoCD applications to configure the cluster.
@@ -96,7 +91,7 @@ The cluster may take 10-15 minutes to finish installing and updating.
 
 ## Project Structure Overview
 
-This project structure is based on the oppinionated configuration found [here](https://github.com/gnunn-gitops/standards/blob/master/folders.md).  For a more detailed breakdown of the intention of this folder structure, feel free to read more there.
+This project structure is based on the opinionated configuration found [here](https://github.com/gnunn-gitops/standards/blob/master/folders.md).  For a more detailed breakdown of the intention of this folder structure, feel free to read more there.
 
 ### Bootstrap
 
@@ -115,7 +110,7 @@ Components contains the bulk of the configuration.  Currently we are utilizing t
 
 The opinionated configuration referenced above recommends several other folders in the `components` folder that we are not utilizing today but may be useful to add in the future.
 
-#### Argocd
+#### ArgoCD
 
 The argocd folder contains the ArgoCD specific objects needed to configure the items in the apps folder.  The folders inside of Argo represent the different custom resources ArgoCD supports and refer back to objects in the `apps` folder.
 
@@ -123,7 +118,7 @@ The argocd folder contains the ArgoCD specific objects needed to configure the i
 
 Operators contain the operators we wish to configure on the cluster and the details of how we would like them to be configured.
 
-The operators folder general follows a pattern where each folder in `operators` is intended to be a seperate ArgoCD application.  The majority of the folder structure utilized inside of those folders is a direct reference to the [redhat-cop/gitops-catalog](https://github.com/redhat-cop/gitops-catalog).  When attempting to add new operators to the cluster, be sure to check there first and feel free to contribute new components back to the catalog as well!
+The operators folder general follows a pattern where each folder in `operators` is intended to be a separate ArgoCD application.  The majority of the folder structure utilized inside of those folders is a direct reference to the [redhat-cop/gitops-catalog](https://github.com/redhat-cop/gitops-catalog).  When attempting to add new operators to the cluster, be sure to check there first and feel free to contribute new components back to the catalog as well!
 
 ## Updating the ArgoCD Groups
 
@@ -168,7 +163,6 @@ Explanation:
 Argo utilizes a `Health Check` to validate if an object has been successfully applied and updated, failed, or is progressing by the cluster.  The health check for the `Subscription` object looks at the `Condition` field in the `Subscription` which is updated by the `OLM`.  Once the `Subscription` is applied to the cluster, `OLM` creates several other objects in order to install the Operator.  Once the Operator has been installed `OLM` will report the status back to the `Subscription` object.  This reconciliation process may take several minutes even after the Operator has successfully installed.
 
 Resolution/Troubleshooting:
-
-- Validate that the Opator has successfully installed via the `Installed Operators` section of the OpenShift Web Console.
+- Validate that the Operator has successfully installed via the `Installed Operators` section of the OpenShift Web Console.
 - If the Operator has not installed, additional troubleshooting is required.
 - If the Operator has successfully installed, feel free to ignore the `Progressing` state and proceed.  `OLM` should reconcile the status after several minutes and Argo will update the state to `Healthy`.
